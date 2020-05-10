@@ -1,80 +1,48 @@
 import ts from 'typescript';
+import { cwd } from 'process';
 
-const formatHost: ts.FormatDiagnosticsHost = {
-  getCanonicalFileName: (path) => path,
-  getCurrentDirectory: ts.sys.getCurrentDirectory,
-  getNewLine: () => ts.sys.newLine,
-};
+import { CONFIG_FILE_NAME } from './constants';
+/*
+Options to add:
+- Directory to read
+- Config File name
+*/
 
-function watchMain() {
-  const configPath = ts.findConfigFile(/*searchPath*/ './', ts.sys.fileExists, 'tsconfig.json');
-  if (!configPath) {
-    throw new Error("Could not find a valid 'tsconfig.json'.");
-  }
+// Retrieve Config File
+ts.findConfigFile(cwd(), ts.sys.fileExists);
 
-  // TypeScript can use several different program creation "strategies":
-  //  * ts.createEmitAndSemanticDiagnosticsBuilderProgram,
-  //  * ts.createSemanticDiagnosticsBuilderProgram
-  //  * ts.createAbstractBuilder
-  // The first two produce "builder programs". These use an incremental strategy
-  // to only re-check and emit files whose contents may have changed, or whose
-  // dependencies may have changes which may impact change the result of prior
-  // type-check and emit.
-  // The last uses an ordinary program which does a full type check after every
-  // change.
-  // Between `createEmitAndSemanticDiagnosticsBuilderProgram` and
-  // `createSemanticDiagnosticsBuilderProgram`, the only difference is emit.
-  // For pure type-checking scenarios, or when another tool/process handles emit,
-  // using `createSemanticDiagnosticsBuilderProgram` may be more desirable.
-  const createProgram = ts.createSemanticDiagnosticsBuilderProgram;
+const config = ts.readConfigFile(CONFIG_FILE_NAME, ts.sys.readFile);
 
-  // Note that there is another overload for `createWatchCompilerHost` that takes
-  // a set of root files.
-  const host = ts.createWatchCompilerHost(
-    configPath,
-    {},
-    ts.sys,
-    createProgram,
-    reportDiagnostic,
-    reportWatchStatusChanged
-  );
-
-  // You can technically override any given hook on the host, though you probably
-  // don't need to.
-  // Note that we're assuming `origCreateProgram` and `origPostProgramCreate`
-  // doesn't use `this` at all.
-  const origCreateProgram = host.createProgram;
-  host.createProgram = (rootNames: ReadonlyArray<string>, options, host, oldProgram) => {
-    console.log("** We're about to create the program! **");
-    return origCreateProgram(rootNames, options, host, oldProgram);
-  };
-  const origPostProgramCreate = host.afterProgramCreate;
-
-  host.afterProgramCreate = (program) => {
-    console.log('** We finished making the program! **');
-    origPostProgramCreate!(program);
-  };
-
-  // `createWatchProgram` creates an initial program, watches files, and updates
-  // the program over time.
-  ts.createWatchProgram(host);
-}
-
-function reportDiagnostic(diagnostic: ts.Diagnostic) {
-  console.error(
-    'Error',
-    diagnostic.code,
-    ':',
-    ts.flattenDiagnosticMessageText(diagnostic.messageText, formatHost.getNewLine())
+if (config['error']) {
+  throw new Error(
+    `Invalid tsconfig.json: ${config['error'].messageText} ${config['error'].file?.fileName}:${config['error'].start}`
   );
 }
 
-/**
- * Prints a diagnostic every time the watch status changes.
- * This is mainly for messages like "Starting compilation" or "Compilation completed".
- */
-function reportWatchStatusChanged(diagnostic: ts.Diagnostic) {
-  console.info(ts.formatDiagnostic(diagnostic, formatHost));
-}
+// function compile(fileNames: string[], options: ts.CompilerOptions): void {
+//   let program = ts.createProgram(fileNames, options);
+//   let emitResult = program.emit();
 
-watchMain();
+//   let allDiagnostics = ts.getPreEmitDiagnostics(program).concat(emitResult.diagnostics);
+
+//   allDiagnostics.forEach((diagnostic) => {
+//     if (diagnostic.file) {
+//       let { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start!);
+//       let message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
+//       console.log(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`);
+//     } else {
+//       console.log(ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
+//     }
+//   });
+
+//   let exitCode = emitResult.emitSkipped ? 1 : 0;
+//   console.log(`Process exiting with code '${exitCode}'.`);
+//   process.exit(exitCode);
+// }
+
+// compile(process.argv.slice(2), {
+//   noEmitOnError: true,
+//   noImplicitAny: true,
+//   target: ts.ScriptTarget.ES5,
+//   module: ts.ModuleKind.CommonJS,
+// });

@@ -1,0 +1,34 @@
+{
+  "name": "ts-junit-xml",
+  "version": "1.0.0",
+  "description": "A cli for typescript formatting of xml",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stayman/ts-junit-xml.git"
+  },
+  "keywords": [
+    "junit",
+    "typescript",
+    "cli"
+  ],
+  "author": "Zachary Stayman",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/stayman/ts-junit-xml/issues"
+  },
+  "homepage": "https://github.com/stayman/ts-junit-xml#readme",
+  "devDependencies": {
+    "@types/node": "^13.13.5",
+    "typescript": "^3.8.3",
+    "@typescript-eslint/eslint-plugin": "^2.31.0",
+    "@typescript-eslint/parser": "^2.31.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.3",
+    "prettier": "^2.0.5"
+  }
+}
